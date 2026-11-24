@@ -30,7 +30,7 @@ struct LocusApp: App {
             .environmentObject(session)
             .environmentObject(pairing)
             .environmentObject(license)
-            .preferredColorScheme(session.appearanceMode.colorScheme)
+            .preferredColorScheme(.dark)
             .onOpenURL { url in
                 handleIncoming(url)
             }
@@ -47,13 +47,6 @@ struct LocusApp: App {
     }
 
     private func handleIncoming(_ url: URL) {
-        if url.scheme == "locus", url.host == "stop" {
-            session.stopJoystick()
-            session.discardRoute()
-            session.stop(pairing: pairing)
-            return
-        }
-
         let ext = url.pathExtension.lowercased()
         if ["plist", "mobiledevicepairing", "mobiledevicepair"].contains(ext) {
             try? pairing.importPairing(from: url)
@@ -65,11 +58,4 @@ struct LocusApp: App {
 
 extension Notification.Name {
     static let locusImportGPX = Notification.Name("locusImportGPX")
-    static let locusDeleteRoute = Notification.Name("locusDeleteRoute")
-    static let locusRunRoute = Notification.Name("locusRunRoute")
-    static let locusBuildRouteToTarget = Notification.Name("locusBuildRouteToTarget")
-    static let locusCancelDrawingRoute = Notification.Name("locusCancelDrawingRoute")
-    static let locusUndoDrawingPoint = Notification.Name("locusUndoDrawingPoint")
-    static let locusSaveDrawingRoute = Notification.Name("locusSaveDrawingRoute")
-    static let locusDismissStatusDetails = Notification.Name("locusDismissStatusDetails")
 }

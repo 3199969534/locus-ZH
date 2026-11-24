@@ -4,6 +4,8 @@ import SwiftUI
 struct LocusApp: App {
     @StateObject private var session = SpoofSession()
     @StateObject private var pairing = PairingStore()
+    @StateObject private var license = LicenseManager()
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage(SetupGate.defaultsKey) private var setupComplete = false
 
     /// Map when setup finished, or when already paired outside this walkthrough.
@@ -14,7 +16,9 @@ struct LocusApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if showMap {
+                if !license.isAuthorized {
+                    ActivationView()
+                } else if showMap {
                     RootView()
                 } else {
                     SetupFlowView(initialStep: SetupGate.initialStep(hasPairingFile: pairing.hasPairingFile)) {
@@ -25,6 +29,7 @@ struct LocusApp: App {
             }
             .environmentObject(session)
             .environmentObject(pairing)
+            .environmentObject(license)
             .preferredColorScheme(session.appearanceMode.colorScheme)
             .onOpenURL { url in
                 handleIncoming(url)
@@ -34,6 +39,9 @@ struct LocusApp: App {
                     SetupGate.markComplete()
                     setupComplete = true
                 }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { Task { await license.verify() } }
             }
         }
     }
